@@ -1,0 +1,11 @@
+{
+  "name": "compiler-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch": "tsc ./own/new-compiler.ts --watch --sourceMap --outDir dist"
+  },
+  "author": "",
+  "license": "ISC"
+}
