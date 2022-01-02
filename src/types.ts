@@ -102,7 +102,7 @@ export interface NewExpressionStatement {
   expression: NewCallExpression;
 }
 
-type NewNode =
+export type NewNode =
   | NewProgram
   | NewNumberLiteral
   | NewStringLiteral

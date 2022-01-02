@@ -1,3 +1,5 @@
+import { NewNode } from "./types";
+
 export function codeGenerator(node: NewNode): string {
   switch (node.type) {
     case "Program":
