@@ -26,48 +26,48 @@ export function parser(tokens: Token[]): Program {
      *  - Name: We don't to handle this one either since it's taken care in the paren case
      */
 
-    switch (true) {
-      case token.type === "number":
-        cursor++;
+    if (token.type === "number") {
+      cursor++;
 
-        return {
-          type: "NumberLiteral",
-          value: token.value,
-        } as NumberLiteral;
-
-      case token.type === "string":
-        cursor++;
-
-        return {
-          type: "StringLiteral",
-          value: token.value,
-        } as StringLiteral;
-
-      case token.type === "paren" && token.value === "(":
-        // Skip the paren and grab the next token, which is always a name token
-        token = next();
-
-        const node = {
-          type: "CallExpression",
-          name: token.value,
-          params: [],
-        } as CallExpression;
-
-        token = next();
-
-        // We iterate as long as we don't find a paren or, in case of finding one, not a closing one
-        while (token.type !== "paren" || token.value !== ")") {
-          node.params.push(walk());
-          token = tokens[cursor];
-        }
-
-        cursor++;
-
-        return node;
-
-      default:
-        throw new TypeError(token.type);
+      return {
+        type: "NumberLiteral",
+        value: token.value,
+      } as NumberLiteral;
     }
+
+    if (token.type === "string") {
+      cursor++;
+
+      return {
+        type: "StringLiteral",
+        value: token.value,
+      } as StringLiteral;
+    }
+
+    if (token.type === "paren" && token.value === "(") {
+      // Skip the paren and grab the next token, which is always a name token
+      token = next();
+
+      const node = {
+        type: "CallExpression",
+        name: token.value,
+        params: [],
+      } as CallExpression;
+
+      token = next();
+
+      // We iterate as long as we don't find a paren or, in case of finding one, not a closing one
+      while (token.type !== "paren" || token.value !== ")") {
+        node.params.push(walk());
+        token = tokens[cursor];
+      }
+
+      cursor++;
+
+      return node;
+    }
+
+    throw new TypeError(token.type);
   }
 
   const ast = {
