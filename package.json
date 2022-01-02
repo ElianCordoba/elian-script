@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "tsc ./own/new-compiler.ts --watch --sourceMap --outDir dist"
+    "watch": "tsc ./src/index.ts --watch --sourceMap --outDir dist"
   },
   "author": "",
   "license": "ISC"
