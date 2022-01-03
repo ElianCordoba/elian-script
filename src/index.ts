@@ -3,7 +3,7 @@ import { parser } from "./parser";
 import { tokenizer } from "./tokenizer";
 import { transformer } from "./transformer";
 
-import { InputSourceCode, OutputSourceCode } from "types";
+import { InputSourceCode, OutputSourceCode } from "./types";
 
 export function compiler(sourceCode: InputSourceCode): OutputSourceCode {
   const tokens = tokenizer(sourceCode);
