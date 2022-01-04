@@ -1,26 +1,5 @@
 import { InputSourceCode, Token } from "./types";
 
-const WHITESPACE = /\s/;
-
-function isWhitespace(character: string): boolean {
-  return WHITESPACE.test(character);
-}
-
-const NUMBERS = /[0-9]/;
-
-function isNumber(character: string): boolean {
-  return NUMBERS.test(character);
-}
-
-// Matches everything except the quote
-const NOTQUOTE = /[^"]/;
-
-const NAME = /[a-z]/i;
-
-function isName(character: string): boolean {
-  return NAME.test(character);
-}
-
 export function tokenizer(sourceCode: InputSourceCode): Token[] {
   // Main logic starts here
   const tokens: Token[] = [];
@@ -100,4 +79,25 @@ export function tokenizer(sourceCode: InputSourceCode): Token[] {
 
     return values.join("");
   }
+}
+
+const WHITESPACE = /\s/;
+
+function isWhitespace(character: string): boolean {
+  return WHITESPACE.test(character);
+}
+
+const NUMBERS = /[0-9]/;
+
+function isNumber(character: string): boolean {
+  return NUMBERS.test(character);
+}
+
+// Matches everything except the quote
+const NOTQUOTE = /[^"]/;
+
+const NAME = /[a-z]/i;
+
+function isName(character: string): boolean {
+  return NAME.test(character);
 }
