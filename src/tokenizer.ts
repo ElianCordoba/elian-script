@@ -1,58 +1,72 @@
-import { InputSourceCode, Token } from "./types";
+import { Impure, InputSourceCode, Token } from "./types";
 
 export function tokenizer(sourceCode: InputSourceCode): Token[] {
-  // Main logic starts here
+  function clasify(char: string): Token[] {
+    // Token acumulator
+    const result: Token[] = [];
+
+    function identifyToken(char: string): Impure {
+      switch (true) {
+        case isWhitespace(char):
+          cursor++;
+          break;
+
+        case char === "(" || char === ")":
+          // ts issue #46600
+          result.push({ type: "paren", value: char as "(" });
+          cursor++;
+          break;
+
+        case char === '"':
+          // Skip the opening quote
+          char = next();
+
+          result.push({
+            type: "string",
+            value: getCompleteLiteral(NOTQUOTE, char),
+          });
+
+          // Skip the closing quote
+          cursor++;
+          break;
+
+        case isName(char):
+          result.push({
+            type: "name",
+            value: getCompleteLiteral(NAME, char),
+          });
+
+          // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
+          break;
+
+        case isNumber(char):
+          result.push({
+            type: "number",
+            value: getCompleteLiteral(NUMBERS, char),
+          });
+
+          // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
+          break;
+
+        default:
+          throw new Error("Unknown token");
+      }
+    }
+
+    identifyToken(char);
+
+    return result;
+  }
+
   const tokens: Token[] = [];
   let cursor = 0;
 
   while (cursor < sourceCode.length) {
     let char = sourceCode[cursor];
 
-    switch (true) {
-      case isWhitespace(char):
-        cursor++;
-        break;
+    const clasifiedTokens = clasify(char);
 
-      case char === "(" || char === ")":
-        // ts issue #46600
-        tokens.push({ type: "paren", value: char as "(" });
-        cursor++;
-        break;
-
-      case char === '"':
-        // Skip the opening quote
-        char = next();
-
-        tokens.push({
-          type: "string",
-          value: getCompleteLiteral(NOTQUOTE, char),
-        });
-
-        // Skip the closing quote
-        cursor++;
-        break;
-
-      case isName(char):
-        tokens.push({
-          type: "name",
-          value: getCompleteLiteral(NAME, char),
-        });
-
-        // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
-        break;
-
-      case isNumber(char):
-        tokens.push({
-          type: "number",
-          value: getCompleteLiteral(NUMBERS, char),
-        });
-
-        // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
-        break;
-
-      default:
-        throw new Error("Unknown token");
-    }
+    tokens?.push(...clasifiedTokens);
   }
 
   return tokens;

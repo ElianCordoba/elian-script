@@ -109,3 +109,6 @@ export type NewNode =
   | NewIdentifier
   | NewCallExpression
   | NewExpressionStatement;
+
+// Denotes that the function updates variables in it's outer scope
+export type Impure = any;
