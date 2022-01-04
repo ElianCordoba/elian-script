@@ -22,26 +22,6 @@ function isName(character: string): boolean {
 }
 
 export function tokenizer(sourceCode: InputSourceCode): Token[] {
-  // Utils are declared in the same scope of the tokenizer function so that you can capture the values
-
-  // Moves the carriage forward one position and return the next character
-  function next() {
-    // Note: We use the prefix operator instead of postfix because otherwise we would first read the property and the update the cursor
-    return sourceCode[++cursor];
-  }
-
-  function getCompleteLiteral(regexp: RegExp, firstValue: string) {
-    const values = [firstValue];
-
-    let current = next();
-    while (regexp.test(current)) {
-      values.push(current);
-      current = next();
-    }
-
-    return values.join("");
-  }
-
   // Main logic starts here
   const tokens: Token[] = [];
   let cursor = 0;
@@ -97,4 +77,27 @@ export function tokenizer(sourceCode: InputSourceCode): Token[] {
   }
 
   return tokens;
+
+  /**
+   * Utils
+   * They are declared in the same scope of the tokenizer function so that you can capture the values
+   */
+
+  // Moves the carriage forward one position and return the next character
+  function next() {
+    // Note: We use the prefix operator instead of postfix because otherwise we would first read the property and the update the cursor
+    return sourceCode[++cursor];
+  }
+
+  function getCompleteLiteral(regexp: RegExp, firstValue: string) {
+    const values = [firstValue];
+
+    let current = next();
+    while (regexp.test(current)) {
+      values.push(current);
+      current = next();
+    }
+
+    return values.join("");
+  }
 }
