@@ -3,28 +3,43 @@ export type OutputSourceCode = string;
 
 // Tokenizer
 
-interface ParenToken {
+export interface WhiteSpaceToken {
+  type: "whitespace";
+}
+
+export interface LineBreakToken {
+  type: "lineBreak";
+}
+
+export interface ParenToken {
   type: "paren";
   value: "(" | ")";
 }
 
-interface LiteralToken {
+export interface LiteralToken {
   type: "number" | "string";
   value: string;
 }
 
-interface NameToken {
+export interface NameToken {
   type: "name";
   value: string;
 }
 
-export type Token = ParenToken | LiteralToken | NameToken;
+export type Token =
+  | WhiteSpaceToken
+  | LineBreakToken
+  | ParenToken
+  | LiteralToken
+  | NameToken;
 
 // Parser
 
 interface NodeDiccionary {
   Program: Program;
   CallExpression: CallExpression;
+  WhiteSpace: WhiteSpace;
+  LineBreak: LineBreak;
   NumberLiteral: NumberLiteral;
   StringLiteral: StringLiteral;
 }
@@ -41,8 +56,16 @@ export interface Program extends BaseNode {
 
 export interface CallExpression extends BaseNode {
   type: "CallExpression";
-  name: "add" | "subtract";
+  name: string;
   params: LispNode[];
+}
+
+export interface WhiteSpace extends BaseNode {
+  type: "WhiteSpace";
+}
+
+export interface LineBreak extends BaseNode {
+  type: "LineBreak";
 }
 
 export interface NumberLiteral extends BaseNode {
@@ -55,7 +78,13 @@ export interface StringLiteral extends BaseNode {
   value: string;
 }
 
-export type LispNode = Program | CallExpression | NumberLiteral | StringLiteral;
+export type LispNode =
+  | Program
+  | WhiteSpace
+  | LineBreak
+  | CallExpression
+  | NumberLiteral
+  | StringLiteral;
 
 // Transformer & Traverser
 
@@ -74,6 +103,16 @@ export type Visitor = {
 export interface NewProgram {
   type: "Program";
   body: NewNode[];
+}
+
+export interface NewWhiteSpace {
+  type: "WhiteSpace";
+  value: " ";
+}
+
+export interface NewLineBreak {
+  type: "LineBreak";
+  value: "\n";
 }
 
 export interface NewNumberLiteral {
@@ -104,6 +143,8 @@ export interface NewExpressionStatement {
 
 export type NewNode =
   | NewProgram
+  | NewWhiteSpace
+  | NewLineBreak
   | NewNumberLiteral
   | NewStringLiteral
   | NewIdentifier

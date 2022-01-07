@@ -7,6 +7,8 @@ import {
   NewNumberLiteral,
   NewProgram,
   NewStringLiteral,
+  NewWhiteSpace,
+  NewLineBreak,
 } from "./types";
 
 function traverser(ast: Program, visitor: Visitor) {
@@ -31,6 +33,8 @@ function traverser(ast: Program, visitor: Visitor) {
         traverseArray(node.params, node);
         break;
 
+      case "WhiteSpace":
+      case "LineBreak":
       case "NumberLiteral":
       case "StringLiteral":
         break;
@@ -56,6 +60,35 @@ export function transformer(ast: Program) {
   ast._context = newAst.body;
 
   traverser(ast, {
+    WhiteSpace: {
+      enter(_, parent) {
+        /**
+         * Since we are transformig
+         * (add 1 2)
+         * to
+         * add(1, 2)
+         * We have to ignore the whitespaces separating the arguments when transformig the AST.
+         * Those will be re-added by the code generator
+         *
+         * TODO: I'm not sure that this is ok, maybe the code generator should only generate the output
+         * and shouln't have to know about this logic
+         */
+        if (parent.type !== "CallExpression") {
+          parent._context?.push({
+            type: "WhiteSpace",
+          } as NewWhiteSpace);
+        }
+      },
+    },
+
+    LineBreak: {
+      enter(_, parent) {
+        parent._context?.push({
+          type: "LineBreak",
+        } as NewLineBreak);
+      },
+    },
+
     NumberLiteral: {
       enter(node, parent) {
         parent._context?.push({

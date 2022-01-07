@@ -3,7 +3,7 @@ import { NewNode } from "./types";
 export function codeGenerator(node: NewNode): string {
   switch (node.type) {
     case "Program":
-      return node.body.map(codeGenerator).join("\n");
+      return node.body.map(codeGenerator).join("");
 
     case "ExpressionStatement":
       return codeGenerator(node.expression) + ";";
@@ -19,11 +19,17 @@ export function codeGenerator(node: NewNode): string {
     case "Identifier":
       return node.name;
 
+    case "WhiteSpace":
+      return " ";
+
+    case "LineBreak":
+      return "\n";
+
     case "NumberLiteral":
       return node.value;
 
     case "StringLiteral":
-      return `${node.value}`;
+      return `"${node.value}"`;
 
     default:
       throw new TypeError((node as any).type);

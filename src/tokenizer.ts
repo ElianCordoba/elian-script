@@ -7,7 +7,13 @@ export function tokenizer(sourceCode: InputSourceCode): Token[] {
 
     function identifyToken(char: string): Impure {
       switch (true) {
+        case isLineBreak(char):
+          result.push({ type: "lineBreak" });
+          cursor++;
+          break;
+
         case isWhitespace(char):
+          result.push({ type: "whitespace" });
           cursor++;
           break;
 
@@ -93,6 +99,10 @@ export function tokenizer(sourceCode: InputSourceCode): Token[] {
 
     return values.join("");
   }
+}
+
+function isLineBreak(character: string): boolean {
+  return character === "\n";
 }
 
 const WHITESPACE = /\s/;

@@ -5,6 +5,9 @@ import {
   CallExpression,
   NumberLiteral,
   StringLiteral,
+  WhiteSpace,
+  LineBreak,
+  NameToken,
 } from "./types";
 
 export function parser(tokens: Token[]): Program {
@@ -19,12 +22,28 @@ export function parser(tokens: Token[]): Program {
     let token = tokens[cursor];
 
     /**
-     * We have 4 kinds of tokens:
-     *  - String & Number: Simple return a literal node
+     * Kinds of tokens:
+     *  - Whitespaces, Line breaks, string & number: Simple return of a new node
      *  - Paren: Could be "(" o ")". If it's an opening one we know it's an expression, so we recursively descend until we find a closing paren, there we break the current iteration.
      *            that's why we don't need to handle the ")"
      *  - Name: We don't to handle this one either since it's taken care in the paren case
      */
+
+    if (token.type === "whitespace") {
+      cursor++;
+
+      return {
+        type: "WhiteSpace",
+      } as WhiteSpace;
+    }
+
+    if (token.type === "lineBreak") {
+      cursor++;
+
+      return {
+        type: "LineBreak",
+      } as LineBreak;
+    }
 
     if (token.type === "number") {
       cursor++;
@@ -46,7 +65,7 @@ export function parser(tokens: Token[]): Program {
 
     if (token.type === "paren" && token.value === "(") {
       // Skip the paren and grab the next token, which is always a name token
-      token = next();
+      token = next() as NameToken;
 
       const node = {
         type: "CallExpression",
