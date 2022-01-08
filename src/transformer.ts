@@ -9,6 +9,9 @@ import {
   NewStringLiteral,
   NewWhiteSpace,
   NewLineBreak,
+  NewVar,
+  NewIdentifier,
+  NewEqual,
 } from "./types";
 
 function traverser(ast: Program, visitor: Visitor) {
@@ -32,15 +35,6 @@ function traverser(ast: Program, visitor: Visitor) {
       case "CallExpression":
         traverseArray(node.params, node);
         break;
-
-      case "WhiteSpace":
-      case "LineBreak":
-      case "NumberLiteral":
-      case "StringLiteral":
-        break;
-
-      default:
-        throw new TypeError(node);
     }
 
     if (methods?.exit) {
@@ -104,6 +98,31 @@ export function transformer(ast: Program) {
           type: "StringLiteral",
           value: node.value,
         } as NewStringLiteral);
+      },
+    },
+
+    Var: {
+      enter(_, parent) {
+        parent._context?.push({
+          type: "Var",
+        } as NewVar);
+      },
+    },
+
+    Equals: {
+      enter(_, parent) {
+        parent._context?.push({
+          type: "Equals",
+        } as NewEqual);
+      },
+    },
+
+    Identifier: {
+      enter(node, parent) {
+        parent._context?.push({
+          type: "Identifier",
+          name: node.value,
+        } as NewIdentifier);
       },
     },
 

@@ -21,9 +21,13 @@ export interface LiteralToken {
   value: string;
 }
 
-export interface NameToken {
-  type: "name";
+export interface IdentifierToken {
+  type: "identifier";
   value: string;
+}
+
+export interface VarToken {
+  type: "var";
 }
 
 export type Token =
@@ -31,7 +35,8 @@ export type Token =
   | LineBreakToken
   | ParenToken
   | LiteralToken
-  | NameToken;
+  | IdentifierToken
+  | VarToken;
 
 // Parser
 
@@ -40,8 +45,11 @@ interface NodeDiccionary {
   CallExpression: CallExpression;
   WhiteSpace: WhiteSpace;
   LineBreak: LineBreak;
+  Var: Var;
+  Identifier: Identifier;
   NumberLiteral: NumberLiteral;
   StringLiteral: StringLiteral;
+  Equals: Equals;
 }
 
 interface BaseNode {
@@ -68,6 +76,15 @@ export interface LineBreak extends BaseNode {
   type: "LineBreak";
 }
 
+export interface Var extends BaseNode {
+  type: "Var";
+}
+
+export interface Identifier extends BaseNode {
+  type: "Identifier";
+  value: string;
+}
+
 export interface NumberLiteral extends BaseNode {
   type: "NumberLiteral";
   value: string;
@@ -78,13 +95,20 @@ export interface StringLiteral extends BaseNode {
   value: string;
 }
 
+export interface Equals extends BaseNode {
+  type: "Equals";
+}
+
 export type LispNode =
   | Program
   | WhiteSpace
   | LineBreak
+  | Var
+  | Identifier
   | CallExpression
   | NumberLiteral
-  | StringLiteral;
+  | StringLiteral
+  | Equals;
 
 // Transformer & Traverser
 
@@ -136,9 +160,18 @@ export interface NewCallExpression {
   arguments: [];
 }
 
+export interface NewVar {
+  type: "Var";
+}
+
 export interface NewExpressionStatement {
   type: "ExpressionStatement";
   expression: NewCallExpression;
+}
+
+// Puncuation
+export interface NewEqual {
+  type: "Equals";
 }
 
 export type NewNode =
@@ -149,7 +182,9 @@ export type NewNode =
   | NewStringLiteral
   | NewIdentifier
   | NewCallExpression
-  | NewExpressionStatement;
+  | NewVar
+  | NewExpressionStatement
+  | NewEqual;
 
 // Denotes that the function updates variables in it's outer scope
 export type Impure = any;

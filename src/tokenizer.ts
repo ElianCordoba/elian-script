@@ -1,4 +1,10 @@
-import { Impure, InputSourceCode, Token } from "./types";
+import {
+  Impure,
+  InputSourceCode,
+  Token,
+  VarToken,
+  IdentifierToken,
+} from "./types";
 
 export function tokenizer(sourceCode: InputSourceCode): Token[] {
   function clasify(char: string): Token[] {
@@ -37,10 +43,16 @@ export function tokenizer(sourceCode: InputSourceCode): Token[] {
           break;
 
         case isName(char):
-          result.push({
-            type: "name",
-            value: getCompleteLiteral(NAME, char),
-          });
+          let current = getCompleteLiteral(NAME, char);
+          let token: IdentifierToken | VarToken;
+
+          if (current === "var") {
+            token = { type: "var" };
+          } else {
+            token = { type: "identifier", value: current };
+          }
+
+          result.push(token);
 
           // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
           break;

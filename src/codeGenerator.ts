@@ -16,6 +16,9 @@ export function codeGenerator(node: NewNode): string {
         ")"
       );
 
+    case "Var":
+      return "var";
+
     case "Identifier":
       return node.name;
 
@@ -31,7 +34,12 @@ export function codeGenerator(node: NewNode): string {
     case "StringLiteral":
       return `"${node.value}"`;
 
+    case "Equals":
+      return "=";
+
     default:
-      throw new TypeError((node as any).type);
+      // If we forget to handle a case, the node would be of that type. Here we assert that it's never, meaning we handled every type
+      const shouldBeNever: never = node;
+      throw new TypeError((shouldBeNever as any).type);
   }
 }
