@@ -1,7 +1,13 @@
 - [x] Migrate to typescript
   Basically done, just some type assertions that could be removed
-- [] More lisp features coverage
+- [] More language features
+  - [] Variables
+    - [x] Initial variable support
+    - [] Expressions result as variable values. Ex: var result add(1, 2)
 - [] Better abstraction for tree transformation
+- [] Use of streams for compilation
+- [] Incremental updates
+- [] Error recovery
+- [] Some form of typechecking
 - [] Different pragma output (Javascript)
 - [] Tests
-
