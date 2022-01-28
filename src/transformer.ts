@@ -1,39 +1,34 @@
 import {
-  Program,
+  KindedNodes,
+  Node,
+  SyntaxKind,
+  SyntaxKindKeys,
   Visitor,
-  LispNode,
-  NewCallExpression,
-  NewExpressionStatement,
-  NewNumberLiteral,
-  NewProgram,
-  NewStringLiteral,
-  NewWhiteSpace,
-  NewLineBreak,
-  NewVar,
-  NewIdentifier,
-  NewEqual,
 } from "./types";
 
-function traverser(ast: Program, visitor: Visitor) {
-  function traverseArray(array: LispNode[], parent: LispNode) {
+function traverser(ast: KindedNodes["Program"], visitor: Visitor) {
+  function traverseArray(array: Node[], parent: Node) {
     array.forEach((child) => traverseNode(child, parent));
   }
 
-  function traverseNode(node: LispNode, parent: LispNode) {
-    const methods = visitor[node.type];
+  function traverseNode(node: Node, parent: Node) {
+    const key = SyntaxKind[node.kind] as SyntaxKindKeys;
+    const methods = visitor[key];
 
     if (methods?.enter) {
       // TODO: node is never
       methods.enter(node as any, parent);
     }
 
-    switch (node.type) {
-      case "Program":
-        traverseArray(node.body, node);
+    switch (node.kind) {
+      case SyntaxKind.Program:
+        const programNode = node as KindedNodes["Program"];
+        traverseArray(programNode.body, node);
         break;
 
-      case "CallExpression":
-        traverseArray(node.params, node);
+      case SyntaxKind.CallExpression:
+        const callExpressionNode = node as KindedNodes["CallExpression"];
+        traverseArray(callExpressionNode.arguments, node);
         break;
     }
 
@@ -45,16 +40,16 @@ function traverser(ast: Program, visitor: Visitor) {
   traverseNode(ast, null as any);
 }
 
-export function transformer(ast: Program) {
+export function transformer(ast: KindedNodes["Program"]) {
   const newAst = {
-    type: "Program",
+    kind: SyntaxKind.Program,
     body: [],
-  } as NewProgram;
+  } as KindedNodes["Program"];
 
   ast._context = newAst.body;
 
   traverser(ast, {
-    WhiteSpace: {
+    Whitespace: {
       enter(_, parent) {
         /**
          * Since we are transformig
@@ -67,83 +62,82 @@ export function transformer(ast: Program) {
          * TODO: I'm not sure that this is ok, maybe the code generator should only generate the output
          * and shouln't have to know about this logic
          */
-        if (parent.type !== "CallExpression") {
+        if (parent.kind !== SyntaxKind.CallExpression) {
           parent._context?.push({
-            type: "WhiteSpace",
-          } as NewWhiteSpace);
+            kind: SyntaxKind.Whitespace,
+          });
         }
       },
     },
 
-    LineBreak: {
+    Newline: {
       enter(_, parent) {
         parent._context?.push({
-          type: "LineBreak",
-        } as NewLineBreak);
+          kind: SyntaxKind.Newline,
+        });
       },
     },
 
     NumberLiteral: {
       enter(node, parent) {
         parent._context?.push({
-          type: "NumberLiteral",
+          kind: SyntaxKind.NumberLiteral,
           value: node.value,
-        } as NewNumberLiteral);
+        });
       },
     },
 
     StringLiteral: {
       enter(node, parent) {
         parent._context?.push({
-          type: "StringLiteral",
+          kind: SyntaxKind.StringLiteral,
           value: node.value,
-        } as NewStringLiteral);
+        });
       },
     },
 
-    Var: {
+    VarKeyword: {
       enter(_, parent) {
         parent._context?.push({
-          type: "Var",
-        } as NewVar);
+          kind: SyntaxKind.VarKeyword,
+        });
       },
     },
 
-    Equals: {
+    EqualsToken: {
       enter(_, parent) {
         parent._context?.push({
-          type: "Equals",
-        } as NewEqual);
+          kind: SyntaxKind.EqualsToken,
+        });
       },
     },
 
     Identifier: {
       enter(node, parent) {
         parent._context?.push({
-          type: "Identifier",
-          name: node.value,
-        } as NewIdentifier);
+          kind: SyntaxKind.Identifier,
+          value: node.value,
+        });
       },
     },
 
     CallExpression: {
       enter(node, parent) {
-        let expression: NewCallExpression | NewExpressionStatement = {
-          type: "CallExpression",
-          callee: {
-            type: "Identifier",
-            name: node.name,
-          },
+        let expression:
+          | KindedNodes["CallExpression"]
+          | KindedNodes["ExpressionStatement"] = {
+          kind: SyntaxKind.CallExpression,
+          callee: node.callee,
           arguments: [],
         };
 
         node._context = expression.arguments;
 
-        if (parent.type !== "CallExpression") {
+        if (parent.kind !== SyntaxKind.CallExpression) {
           expression = {
-            type: "ExpressionStatement",
+            kind: SyntaxKind.ExpressionStatement,
             expression: expression,
-          };
+          } as unknown as KindedNodes["ExpressionStatement"];
         }
 
         parent._context?.push(expression);

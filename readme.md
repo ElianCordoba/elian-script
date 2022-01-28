@@ -1,4 +1,4 @@
-# Suported sytax
+# Suported syntax
 
 ### Variables
 ```
@@ -40,3 +40,7 @@ subtract(5, add(2, 2))
 - [] Some form of typechecking
 - [] Different pragma output (Javascript)
 - [] Tests
+
+# Trivia
+- First token gets the initial trivia
+- A token owns all the trivia on the same line upto the next token
