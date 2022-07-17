@@ -5,7 +5,7 @@ import { transformer } from "./transformer";
 
 import { InputSourceCode, OutputSourceCode } from "./types";
 
-export function compiler(sourceCode: InputSourceCode): OutputSourceCode {
+export function compile(sourceCode: InputSourceCode): OutputSourceCode {
   const tokens = tokenizer(sourceCode);
   const ast = parser(tokens);
   const newAst = transformer(ast);
