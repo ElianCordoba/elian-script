@@ -1,47 +1,50 @@
-import {
-  Token,
-  LispNode,
-  Program,
-  CallExpression,
-  NumberLiteral,
-  StringLiteral,
-  WhiteSpace,
-  LineBreak,
-  IdentifierToken,
-  Var,
-  Identifier,
-  Equals,
-} from "./types";
+import { Token, SyntaxKind, Node, KindedNodes } from "./types";
+import { isLiteralNode, isValueLessKind, KindToText } from "./utils";
 
-export function parser(tokens: Token[]): Program {
+export function parser(tokens: Token[]): KindedNodes["Program"] {
   let cursor = 0;
 
-  function next() {
+  function next<T extends Token>() {
     // Aca usamos el prefix en ves del posfix porque sino se lee primero la propiedad y despues se actualiza el valor del cursor
-    return tokens[++cursor];
+    return tokens[++cursor] as T;
   }
 
-  // Could return undefined in case it's the EOF
-  function lookAhead(): Token | undefined {
-    let innterCursor = cursor;
-    let nextToken = tokens[++innterCursor];
+  function findFollowingNonTriviaToken(direction: "forward" | "back") {
+    function move() {
+      direction === "forward" ? ++innerCursor : --innerCursor;
+    }
 
-    while (
-      cursor < tokens.length &&
-      (nextToken?.type === "whitespace" || nextToken?.type === "lineBreak")
-    ) {
-      nextToken = tokens[++innterCursor];
+    let innerCursor = cursor;
+
+    move();
+
+    let nextToken = tokens[innerCursor];
+
+    while (cursor < tokens.length && nextToken?.kind >= SyntaxKind.Whitespace) {
+      move();
+      nextToken = tokens[innerCursor];
     }
 
     return nextToken;
   }
 
-  // TODO: Reuse skip trivia
-  function lookBack() {
-    return tokens[cursor - 1];
+  function lookAhead(skipTrivia = true): Token | undefined {
+    if (skipTrivia) {
+      return findFollowingNonTriviaToken("forward");
+    } else {
+      return tokens[cursor + 1];
+    }
   }
 
-  function walk(): LispNode[] {
+  function lookBack(skipTrivia = true): Token | undefined {
+    if (skipTrivia) {
+      return findFollowingNonTriviaToken("back");
+    } else {
+      return tokens[cursor - 1];
+    }
+  }
+
+  function walk(): Node[] {
     let token = tokens[cursor];
 
     /**
@@ -52,64 +55,36 @@ export function parser(tokens: Token[]): Program {
      *  - Name: We don't to handle this one either since it's taken care in the paren case
      */
 
-    if (token.type === "whitespace") {
+    if (isValueLessKind(token.kind)) {
       cursor++;
 
       return [
         {
-          type: "WhiteSpace",
-        } as WhiteSpace,
+          kind: token.kind,
+        },
       ];
     }
 
-    if (token.type === "lineBreak") {
+    if (isLiteralNode(token.kind)) {
       cursor++;
 
       return [
         {
-          type: "LineBreak",
-        } as LineBreak,
-      ];
-    }
-
-    if (token.type === "var") {
-      cursor++;
-
-      return [
-        {
-          type: "Var",
-        } as Var,
-      ];
-    }
-
-    if (token.type === "number") {
-      cursor++;
-
-      return [
-        {
-          type: "NumberLiteral",
+          kind: token.kind,
           value: token.value,
-        } as NumberLiteral,
+        },
       ];
     }
 
-    if (token.type === "string") {
-      cursor++;
+    if (
+      token.kind === SyntaxKind.Identifier &&
+      lookBack()?.kind !== SyntaxKind.OpenParenToken
+    ) {
+      const shouldBeLiteral = lookAhead()?.kind;
 
-      return [
-        {
-          type: "StringLiteral",
-          value: token.value,
-        } as StringLiteral,
-      ];
-    }
-
-    if (token.type === "identifier" && lookBack().type !== "paren") {
-      const shouldBeIdentifier = lookAhead()?.type;
-
-      if (shouldBeIdentifier !== "number" && shouldBeIdentifier !== "string") {
+      if (isLiteralNode(shouldBeLiteral)) {
         throw new Error(
-          `A "var" keyword can only be followed by a number o a string literal but a ${shouldBeIdentifier} was found`
+          `A "var" keyword can only be followed by a number o a string literal but a ${shouldBeLiteral} was found`
         );
       }
 
@@ -117,31 +92,35 @@ export function parser(tokens: Token[]): Program {
 
       return [
         {
-          type: "Identifier",
+          kind: SyntaxKind.Identifier,
           value: token.value,
-        } as Identifier,
-        { type: "WhiteSpace" },
-        { type: "Equals" } as Equals,
+        },
+        { kind: SyntaxKind.Whitespace },
+        { kind: SyntaxKind.EqualsToken },
       ];
     }
 
-    if (token.type === "paren" && token.value === "(") {
-      // Skip the paren and grab the next token, which is always a name token
-      token = next() as IdentifierToken;
+    if (token.kind === SyntaxKind.OpenParenToken) {
+      // Skip the paren and grab the next token, which is always an identifier token
+      token = next();
 
       const node = {
-        type: "CallExpression",
-        name: token.value,
-        params: [],
-      } as CallExpression;
+        kind: SyntaxKind.CallExpression,
+        callee: {
+          kind: SyntaxKind.Identifier,
+          value: token.value,
+        },
+        arguments: [],
+      } as KindedNodes["CallExpression"];
 
       token = next();
 
       // We iterate as long as we don't find a paren or, in case of finding one, not a closing one
-      while (token.type !== "paren" || token.value !== ")") {
+      // while (token.kind !== "paren" || token.value !== ")") {
+      while (token.kind !== SyntaxKind.CloseParenToken) {
         const nodes = walk();
 
-        node.params.push(...nodes);
+        node.arguments.push(...nodes);
 
         token = tokens[cursor];
       }
@@ -151,13 +130,13 @@ export function parser(tokens: Token[]): Program {
       return [node];
     }
 
-    throw new TypeError(token.type);
+    throw new TypeError((token as any).type);
   }
 
   const ast = {
-    type: "Program",
+    kind: SyntaxKind.Program,
     body: [],
-  } as Program;
+  } as KindedNodes["Program"];
 
   while (cursor < tokens.length) {
     ast.body.push(...walk());

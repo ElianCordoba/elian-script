@@ -1,45 +1,46 @@
-import { NewNode } from "./types";
+import { Node, KindedNodes, SyntaxKind } from "./types";
 
-export function codeGenerator(node: NewNode): string {
-  switch (node.type) {
-    case "Program":
-      return node.body.map(codeGenerator).join("");
+export function codeGenerator(node: Node): string | undefined {
+  switch (node.kind) {
+    case SyntaxKind.Program:
+      return (node as KindedNodes["Program"]).body.map(codeGenerator).join("");
 
-    case "ExpressionStatement":
-      return codeGenerator(node.expression) + ";";
-
-    case "CallExpression":
+    case SyntaxKind.ExpressionStatement:
       return (
-        codeGenerator(node.callee) +
+        codeGenerator((node as KindedNodes["ExpressionStatement"]).expression) +
+        ";"
+      );
+
+    case SyntaxKind.CallExpression:
+      const callExpressionNode = node as KindedNodes["CallExpression"];
+
+      return (
+        codeGenerator(callExpressionNode.callee) +
         "(" +
-        node.arguments.map(codeGenerator).join(", ") +
+        callExpressionNode.arguments.map(codeGenerator).join(", ") +
         ")"
       );
 
-    case "Var":
+    case SyntaxKind.VarKeyword:
       return "var";
 
-    case "Identifier":
-      return node.name;
-
-    case "WhiteSpace":
+    case SyntaxKind.Whitespace:
       return " ";
 
-    case "LineBreak":
+    case SyntaxKind.Newline:
       return "\n";
 
-    case "NumberLiteral":
+    case SyntaxKind.Identifier:
+    case SyntaxKind.NumberLiteral:
       return node.value;
 
-    case "StringLiteral":
+    case SyntaxKind.StringLiteral:
       return `"${node.value}"`;
 
-    case "Equals":
+    case SyntaxKind.EqualsToken:
       return "=";
 
     default:
-      // If we forget to handle a case, the node would be of that type. Here we assert that it's never, meaning we handled every type
-      const shouldBeNever: never = node;
-      throw new TypeError((shouldBeNever as any).type);
+      throw new TypeError((node as any).kind);
   }
 }

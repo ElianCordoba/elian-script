@@ -3,188 +3,125 @@ export type OutputSourceCode = string;
 
 // Tokenizer
 
-export interface WhiteSpaceToken {
-  type: "whitespace";
+// Note: token > SyntaxKind.Identifier => token is a keyword
+export enum SyntaxKind {
+  Unknown,
+
+  // Trivia
+  Newline,
+  Whitespace,
+
+  // Literals
+  NumberLiteral,
+  StringLiteral,
+
+  // Punctuation
+  OpenParenToken,
+  CloseParenToken,
+  EqualsToken,
+
+  // Identifier
+  Identifier,
+
+  // Reserved words
+  VarKeyword,
+
+  // Used by the parser
+  Program,
+  CallExpression,
+  ExpressionStatement,
 }
 
-export interface LineBreakToken {
-  type: "lineBreak";
-}
+export type LiteralKind = SyntaxKind.NumberLiteral | SyntaxKind.StringLiteral;
+export type ValueLessKind =
+  | SyntaxKind.Newline
+  | SyntaxKind.Whitespace
+  | SyntaxKind.VarKeyword;
 
-export interface ParenToken {
-  type: "paren";
-  value: "(" | ")";
-}
-
-export interface LiteralToken {
-  type: "number" | "string";
-  value: string;
-}
-
-export interface IdentifierToken {
-  type: "identifier";
-  value: string;
-}
-
-export interface VarToken {
-  type: "var";
-}
-
-export type Token =
-  | WhiteSpaceToken
-  | LineBreakToken
-  | ParenToken
-  | LiteralToken
-  | IdentifierToken
-  | VarToken;
+export type Token = {
+  kind: SyntaxKind;
+  value?: string;
+};
 
 // Parser
 
-interface NodeDiccionary {
-  Program: Program;
-  CallExpression: CallExpression;
-  WhiteSpace: WhiteSpace;
-  LineBreak: LineBreak;
-  Var: Var;
-  Identifier: Identifier;
-  NumberLiteral: NumberLiteral;
-  StringLiteral: StringLiteral;
-  Equals: Equals;
+export interface Node {
+  kind: SyntaxKind;
+  value?: string;
+  _context?: Node[];
 }
 
-interface BaseNode {
-  type: keyof NodeDiccionary;
-  _context?: NewNode[];
-}
+// From ts-essentials
+export type Merge<First, Second> = Omit<First, keyof Second> & Second;
 
-export interface Program extends BaseNode {
-  type: "Program";
-  body: LispNode[];
-}
+// Kinded nodes
 
-export interface CallExpression extends BaseNode {
-  type: "CallExpression";
-  name: string;
-  params: LispNode[];
-}
+export type SyntaxKindKeys = keyof typeof SyntaxKind;
+type BaseNodes = { [key in SyntaxKindKeys]: Node };
 
-export interface WhiteSpace extends BaseNode {
-  type: "WhiteSpace";
-}
+// By default you have node types, but if there is a kinded node present, then it gets replaced by the union of the base
+// node with the kinded node overriding exisitng properties. This is to ensure that kinded nodes also have the _context property
+export type KindedNodes = Merge<BaseNodes, BaseNodes & _KindedNodes>;
 
-export interface LineBreak extends BaseNode {
-  type: "LineBreak";
-}
+export interface _KindedNodes {
+  CallExpression: {
+    kind: SyntaxKind.CallExpression;
+    callee: KindedNodes["Identifier"];
+    arguments: Node[];
+  };
 
-export interface Var extends BaseNode {
-  type: "Var";
-}
+  EqualsToken: {
+    kind: SyntaxKind.EqualsToken;
+  };
 
-export interface Identifier extends BaseNode {
-  type: "Identifier";
-  value: string;
-}
+  ExpressionStatement: {
+    kind: SyntaxKind.ExpressionStatement;
+    expression: KindedNodes["CallExpression"];
+  };
 
-export interface NumberLiteral extends BaseNode {
-  type: "NumberLiteral";
-  value: string;
-}
+  Identifier: {
+    kind: SyntaxKind.Identifier;
+    value: string;
+  };
 
-export interface StringLiteral extends BaseNode {
-  type: "StringLiteral";
-  value: string;
-}
+  Newline: {
+    kind: SyntaxKind.Newline;
+  };
 
-export interface Equals extends BaseNode {
-  type: "Equals";
-}
+  NumberLiteral: {
+    kiond: SyntaxKind.NumberLiteral;
+    value: string;
+  };
 
-export type LispNode =
-  | Program
-  | WhiteSpace
-  | LineBreak
-  | Var
-  | Identifier
-  | CallExpression
-  | NumberLiteral
-  | StringLiteral
-  | Equals;
+  Program: {
+    kind: SyntaxKind.Program;
+    body: Node[];
+  };
+
+  StringLiteral: {
+    kind: SyntaxKind.StringLiteral;
+    value: string;
+  };
+
+  VarKeyword: {
+    kind: SyntaxKind.VarKeyword;
+  };
+
+  Whitespace: {
+    kind: SyntaxKind.Whitespace;
+  };
+}
 
 // Transformer & Traverser
 
-type VisitorFn<nodeType extends LispNode["type"]> = (
-  node: NodeDiccionary[nodeType],
-  parent: LispNode
-) => void;
-
 export type Visitor = {
-  [nodeType in LispNode["type"]]?: {
-    enter?: VisitorFn<nodeType>;
-    exit?: VisitorFn<nodeType>;
+  [Kind in SyntaxKindKeys]?: {
+    enter?: VisitorFn<Kind>;
+    exit?: VisitorFn<Kind>;
   };
 };
 
-export interface NewProgram {
-  type: "Program";
-  body: NewNode[];
-}
-
-export interface NewWhiteSpace {
-  type: "WhiteSpace";
-  value: " ";
-}
-
-export interface NewLineBreak {
-  type: "LineBreak";
-  value: "\n";
-}
-
-export interface NewNumberLiteral {
-  type: "NumberLiteral";
-  value: string;
-}
-
-export interface NewStringLiteral {
-  type: "StringLiteral";
-  value: string;
-}
-
-export interface NewIdentifier {
-  type: "Identifier";
-  name: string;
-}
-
-export interface NewCallExpression {
-  type: "CallExpression";
-  callee: NewIdentifier;
-  arguments: [];
-}
-
-export interface NewVar {
-  type: "Var";
-}
-
-export interface NewExpressionStatement {
-  type: "ExpressionStatement";
-  expression: NewCallExpression;
-}
-
-// Puncuation
-export interface NewEqual {
-  type: "Equals";
-}
-
-export type NewNode =
-  | NewProgram
-  | NewWhiteSpace
-  | NewLineBreak
-  | NewNumberLiteral
-  | NewStringLiteral
-  | NewIdentifier
-  | NewCallExpression
-  | NewVar
-  | NewExpressionStatement
-  | NewEqual;
-
-// Denotes that the function updates variables in it's outer scope
-export type Impure = any;
+type VisitorFn<NodeKind extends SyntaxKindKeys> = (
+  node: KindedNodes[NodeKind],
+  parent: Node
+) => void;

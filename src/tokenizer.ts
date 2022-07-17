@@ -1,77 +1,72 @@
-import {
-  Impure,
-  InputSourceCode,
-  Token,
-  VarToken,
-  IdentifierToken,
-} from "./types";
+import { InputSourceCode, SyntaxKind, Token } from "./types";
 
 export function tokenizer(sourceCode: InputSourceCode): Token[] {
   function clasify(char: string): Token[] {
     // Token acumulator
     const result: Token[] = [];
 
-    function identifyToken(char: string): Impure {
-      switch (true) {
-        case isLineBreak(char):
-          result.push({ type: "lineBreak" });
-          cursor++;
-          break;
+    switch (true) {
+      case isNewline(char):
+        result.push({ kind: SyntaxKind.Newline });
+        cursor++;
+        break;
 
-        case isWhitespace(char):
-          result.push({ type: "whitespace" });
-          cursor++;
-          break;
+      case isWhitespace(char):
+        result.push({ kind: SyntaxKind.Whitespace });
+        cursor++;
+        break;
 
-        case char === "(" || char === ")":
-          // ts issue #46600
-          result.push({ type: "paren", value: char as "(" });
-          cursor++;
-          break;
+      case char === "(":
+        // ts issue #46600
 
-        case char === '"':
-          // Skip the opening quote
-          char = next();
+        result.push({ kind: SyntaxKind.OpenParenToken });
+        cursor++;
+        break;
 
-          result.push({
-            type: "string",
-            value: getCompleteLiteral(NOTQUOTE, char),
-          });
+      case char === ")":
+        result.push({ kind: SyntaxKind.CloseParenToken });
+        cursor++;
+        break;
 
-          // Skip the closing quote
-          cursor++;
-          break;
+      case char === '"':
+        // Skip the opening quote
+        char = next();
 
-        case isName(char):
-          let current = getCompleteLiteral(NAME, char);
-          let token: IdentifierToken | VarToken;
+        result.push({
+          kind: SyntaxKind.StringLiteral,
+          value: getCompleteLiteral(NOTQUOTE, char),
+        });
 
-          if (current === "var") {
-            token = { type: "var" };
-          } else {
-            token = { type: "identifier", value: current };
-          }
+        // Skip the closing quote
+        cursor++;
+        break;
 
-          result.push(token);
+      case isNumber(char):
+        result.push({
+          kind: SyntaxKind.NumberLiteral,
+          value: getCompleteLiteral(NUMBERS, char),
+        });
 
-          // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
-          break;
+        // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
+        break;
 
-        case isNumber(char):
-          result.push({
-            type: "number",
-            value: getCompleteLiteral(NUMBERS, char),
-          });
+      case isName(char):
+        let current = getCompleteLiteral(NAME, char);
+        let token: Token;
 
-          // Note: We don't add the cursor++ since the  `getCompleteLiteral` already did that
-          break;
+        if (current === "var") {
+          token = { kind: SyntaxKind.VarKeyword };
+        } else {
+          token = { kind: SyntaxKind.Identifier, value: current };
+        }
 
-        default:
-          throw new Error("Unknown token");
-      }
+        result.push(token);
+
+        break;
+
+      default:
+        throw new Error("Unknown token");
     }
-
-    identifyToken(char);
 
     return result;
   }
@@ -113,7 +108,7 @@ export function tokenizer(sourceCode: InputSourceCode): Token[] {
   }
 }
 
-function isLineBreak(character: string): boolean {
+function isNewline(character: string): boolean {
   return character === "\n";
 }
 
