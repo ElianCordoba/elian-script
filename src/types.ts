@@ -33,6 +33,8 @@ export enum SyntaxKind {
 }
 
 export type LiteralKind = SyntaxKind.NumberLiteral | SyntaxKind.StringLiteral;
+
+// These are nodes that don't have a .value property
 export type ValueLessKind =
   | SyntaxKind.Newline
   | SyntaxKind.Whitespace

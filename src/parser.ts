@@ -1,5 +1,5 @@
 import { Token, SyntaxKind, Node, KindedNodes } from "./types";
-import { isLiteralNode, isValueLessKind, KindToText } from "./utils";
+import { isLiteralNode, isValueLessKind } from "./utils";
 
 export function parser(tokens: Token[]): KindedNodes["Program"] {
   let cursor = 0;

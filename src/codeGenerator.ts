@@ -1,6 +1,6 @@
 import { Node, KindedNodes, SyntaxKind } from "./types";
 
-export function codeGenerator(node: Node): string | undefined {
+export function codeGenerator(node: Node): string {
   switch (node.kind) {
     case SyntaxKind.Program:
       return (node as KindedNodes["Program"]).body.map(codeGenerator).join("");
@@ -32,7 +32,7 @@ export function codeGenerator(node: Node): string | undefined {
 
     case SyntaxKind.Identifier:
     case SyntaxKind.NumberLiteral:
-      return node.value;
+      return node.value!;
 
     case SyntaxKind.StringLiteral:
       return `"${node.value}"`;

@@ -1,5 +1,5 @@
 const {
-  compiler,
+  compile,
   tokenizer,
   parser,
   transformer,
@@ -13,5 +13,5 @@ var a 1
 var b    "hi"
 `;
 
-const res = compiler(sourceCode);
+const res = compile(sourceCode);
 console.log(res);
